@@ -34,7 +34,7 @@ class EventRemovedEvent extends Event {
 
 export const getEventsRegisteredOnNode = (node: Node) => [...(handlersMap.get(node)?.keys() ?? [])];
 
-export function patchNodeEventListeners() {
+function patchNodeEventListeners() {
   // Map original listener → wrapped once listener per capture
   const onceWrappers = new WeakMap<
     ((...args: any[]) => any) | { handleEvent: (...args: any[]) => any },
@@ -147,4 +147,59 @@ export function patchNodeEventListeners() {
 
     return EventTarget.prototype.removeEventListener.call(this, type, actualListener as any, options);
   };
+}
+
+function patchOnEvents() {
+  // Collect all global constructors inheriting from Node
+  const globalKeys = Reflect.ownKeys(window)
+    .filter((v) => typeof v === "string" && v[0] === v[0].toUpperCase()) // class
+    .filter((v) => window[v as keyof Window]) // from window
+    .filter((v) => Node.isPrototypeOf(window[v as keyof Window])); // extends Node
+  const nodeConstructors: Function[] = globalKeys.map((key) => (globalThis as any)[key]);
+
+  for (const ctor of nodeConstructors) {
+    const proto = ctor.prototype;
+    const propNames = Object.getOwnPropertyNames(proto);
+
+    for (const prop of propNames) {
+      if (!prop.startsWith("on")) continue;
+
+      const desc = Object.getOwnPropertyDescriptor(proto, prop);
+      if (!desc || !desc.configurable) continue; // skip unconfigurable
+
+      let currentListener: ((...args: any[]) => any) | null = null;
+
+      Object.defineProperty(proto, prop, {
+        configurable: true,
+        enumerable: true,
+        get() {
+          return currentListener;
+        },
+        set(fn: ((...args: any[]) => any) | null) {
+          console.log(fn)
+
+          const node = this as Node;
+
+          // Remove previous listener
+          if (currentListener) {
+            node.removeEventListener(prop.slice(2), currentListener);
+            const typeMap = handlersMap.get(node)?.get(prop.slice(2));
+            if (typeMap) typeMap.delete(currentListener);
+          }
+
+          currentListener = fn;
+
+          if (fn) {
+            // Add new listener through patched addEventListener
+            node.addEventListener(prop.slice(2), fn);
+          }
+        }
+      });
+    }
+  }
+}
+
+export function patchAllEvents() {
+  patchNodeEventListeners();
+  patchOnEvents();
 }

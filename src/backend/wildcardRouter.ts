@@ -7,12 +7,12 @@ const wildcardRouter = express.Router();
 
 wildcardRouter.get("/", (req, res) => res.redirect(308, '/index.html'));
 
-wildcardRouter.get<{ everything: string }>('/.common/*everything', (req, res) => {
+wildcardRouter.get<{ everything: string[] }>('/.common/*everything', (req, res) => {
   // Redirect to root so we can take advantage of caching mechanisms
   const justTheSubdomainPart = `${req.subdomains.toReversed().join('.')}.`;
   const justTheActualDomain = req.host.replace(justTheSubdomainPart, '');
 
-  const associatedUrlAtActualDomain = `${req.protocol}://${justTheActualDomain}/.common/${req.params.everything}`;
+  const associatedUrlAtActualDomain = `${req.protocol}://${justTheActualDomain}/.common/${req.params.everything.join('/')}`;
 
   res.redirect(308, associatedUrlAtActualDomain);
 });

@@ -7,8 +7,3 @@ export function nanoid(e = 21) {
   for (let n = 0; n < e; n++) t += alphabet[63 & r[n]];
   return t;
 }
-
-export const [projectSubdomain, userSubdomain, ...host] =
-  window.location.hostname.split("");
-
-export const hostWithoutSubdomain = `${host.join()}:${location.port}`;

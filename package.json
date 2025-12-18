@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "rm -frfr dist && mkdir dist && cp -frfr src/* dist/ && find dist/ -name \"*.ts\" -type f -delete && npx tsc"
+    "build": "rm -frfr dist && mkdir dist && cp -frfr -s \"$(pwd)\"/src/* ./dist/ && find dist/ -name \"*.ts\" -type f,l -delete && npx tsgo"
   },
   "repository": {
     "type": "git",
@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@immjs/express-subdomain": "^1.2.5",
+    "@typescript/native-preview": "^7.0.0-dev.20251210.1",
     "express": "^5.1.0"
   }
 }

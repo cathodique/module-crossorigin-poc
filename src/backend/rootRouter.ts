@@ -5,6 +5,14 @@ import rootDirname from "../rootDirname.js";
 
 const rootRouter = Router();
 
+rootRouter.use("/.common", express.static(
+  join(rootDirname, "assets/@/.common"),
+  {
+    setHeaders (res, path, stat) {
+      res.set("Access-Control-Allow-Origin", "*")
+    },
+  },
+));
 rootRouter.use(express.static(join(rootDirname, "assets/@/")));
 
 export default rootRouter;
